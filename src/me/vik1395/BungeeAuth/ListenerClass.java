@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.Callback;
+import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -47,7 +49,7 @@ public class ListenerClass implements Listener
 	public static HashMap<String, ScheduledTask> prelogin = new HashMap<>();
 	public static List<String> guest = new ArrayList<String>();
 	public static HashMap<String, String> sendbackto = new HashMap<>();
-	
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPreLogin(PreLoginEvent ple)
 	{
@@ -63,18 +65,24 @@ public class ListenerClass implements Listener
 	{
 		String servername = sce.getTarget().getName();
 		String status = ct.getStatus(sce.getPlayer().getName());
-		if (!(servername.equals(Main.authlobby) || servername.equals(Main.authlobby2)))
+		if (!(sce.getTarget().getName().equals(Main.authlobby)))
 		{
 			sendbackto.put(sce.getPlayer().getName(), servername);
 			if (!(status.equals("online")))
 			{
 				sce.setCancelled(true);
 				movePlayer(sce.getPlayer(), true);
+				kickPlayerIfServerDead(sce.getPlayer(), sce.getTarget());
 			}
+			return;
 		}
-		else if (status.equals("online"))
+		// not have forced host, kick player
+		else if (status.equals("online") || !(sendbackto.containsKey(sce.getPlayer().getName())))
 		{
+			System.out.println("forcedhost_notexist");
 			sce.setCancelled(true);
+			sce.getPlayer().disconnect(new TextComponent(Main.error_no_server));
+			return;
 		}
 	}
 
@@ -183,7 +191,7 @@ public class ListenerClass implements Listener
 	public static void movePlayer(ProxiedPlayer pl, boolean authlobby)
 	{
 		ProxyServer ps = Main.plugin.getProxy();
-
+		Tables ct = new Tables();
 		if(authlobby)
 		{
 			ServerInfo sinf = null;
@@ -192,48 +200,22 @@ public class ListenerClass implements Listener
 				sinf = ps.getServerInfo(Main.authlobby);
 				pl.connect(sinf);
 			}
-			else if(!(ps.getServerInfo(Main.authlobby2)==null))
-			{
-				sinf = ps.getServerInfo(Main.authlobby2);
-				pl.connect(sinf);
-			}
 			else
 			{
 				pl.disconnect(new TextComponent(Main.error_authlobby));
-				System.err.println("[BungeeAuth] AuthLobby and Fallback AuthLobby not found!");
-				return;
+				System.err.println("[BungeeAuth] AuthLobby not found!");
 			}
 
 		}
-		else
+		else if(sendbackto.containsKey(pl.getName()) && !(ps.getServerInfo(sendbackto.get(pl.getName()))==null))
 		{
-			ServerInfo sinf = null;
-			if(sendbackto.containsKey(pl.getName()) && !(ps.getServerInfo(sendbackto.get(pl.getName()))==null))
-			{
-				sinf = ps.getServerInfo(sendbackto.get(pl.getName()));
-				sendbackto.remove(pl.getName());
-				pl.connect(sinf);
-			}
-			else if(!(ps.getServerInfo(Main.lobby)==null))
-			{
-				sinf = ps.getServerInfo(Main.lobby);
-				pl.connect(sinf);
-			}
-			else if(!(ps.getServerInfo(Main.lobby2)==null))
-			{
-				sinf = ps.getServerInfo(Main.lobby2);
-				pl.connect(sinf);
-			}
-			else
-			{
-				pl.sendMessage(new ComponentBuilder(Main.error_lobby).color(ChatColor.DARK_RED).create());
-				System.err.println("[BungeeAuth] Lobby and Fallback Lobby not found!");
-				return;
-			}
+			ServerInfo sinf = ps.getServerInfo(sendbackto.get(pl.getName()));
+			sendbackto.remove(pl.getName());
+			pl.connect(sinf);
 		}
 	}
-	
-	
+
+
 	protected static void startTask(final ProxiedPlayer pl)
 	{
 		guest.add(pl.getName());
@@ -246,7 +228,7 @@ public class ListenerClass implements Listener
 			prelogin.put(pl.getName(), Main.plugin.getProxy().getScheduler().schedule(Main.plugin, new Runnable() {
 
 				@Override
-				public void run() 
+				public void run()
 				{
 					if(guest.contains(pl.getName()))
 					{
@@ -260,10 +242,29 @@ public class ListenerClass implements Listener
 					}
 					pl.disconnect(new TextComponent(Main.nologin_kick));
 				}
-				
+
 			}, (long) Main.gseshlength, TimeUnit.SECONDS));
 		}
 	}
-	
-	
+
+
+	protected static void kickPlayerIfServerDead(final ProxiedPlayer pl, final ServerInfo sinf)
+	{
+		try {
+			sinf.ping(new Callback<ServerPing>() {
+				@Override
+				public void done(ServerPing ping, Throwable throwable) {
+					if (ping==null)
+					{
+						pl.disconnect(new TextComponent(Main.error_no_server));
+					}
+				}
+			});
+		}
+		catch (Exception e)
+		{
+			pl.disconnect(new TextComponent(Main.error_no_server));
+		}
+	}
+
 }
