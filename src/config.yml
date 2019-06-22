@@ -19,7 +19,7 @@ DBName: Bungee
 #The name of the MySQL database where BungeeAuth's Tables shall be created.
 
 AuthLobby: AuthLobby
-# The name of the lobby where players are pushed before they authenticate.
+# The name of the lobby where players are pushed before they authenticate. leave it same as normal lobby if you don't have an auth lobby.
 
 Strict AuthLobby: true
 # Only allow being in AuthLobby for sake of authentication
