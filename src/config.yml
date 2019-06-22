@@ -18,8 +18,11 @@ Password: 'pass'
 DBName: Bungee
 #The name of the MySQL database where BungeeAuth's Tables shall be created.
 
-AuthLobby: lobby
-# The name of the lobby where players are pushed before they authenticate. leave it same as normal lobby if you don't have an auth lobby.
+AuthLobby: AuthLobby
+# The name of the lobby where players are pushed before they authenticate.
+
+Strict AuthLobby: true
+# Only allow being in AuthLobby for sake of authentication
 
 Ask Email: false
 # Set this to True if you want the plugin to prompt users to register their email when they login to the server for the first time.

@@ -76,10 +76,9 @@ public class ListenerClass implements Listener
 			}
 			return;
 		}
-		// not have forced host, kick player
-		else if (status.equals("online") || !(sendbackto.containsKey(sce.getPlayer().getName())))
+		// if no return server, kick player
+		else if (Main.strict_authlobby && (status.equals("online") || !(sendbackto.containsKey(sce.getPlayer().getName()))))
 		{
-			System.out.println("forcedhost_notexist");
 			sce.setCancelled(true);
 			sce.getPlayer().disconnect(new TextComponent(Main.error_no_server));
 			return;

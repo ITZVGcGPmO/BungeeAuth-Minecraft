@@ -36,7 +36,7 @@ public class Main extends Plugin
 	public static HashMap<String, Runnable> guestserverchecker;
 	public static Plugin plugin;
 	public static int seshlength, phpport, gseshlength, entperip, errlim, pwtimeout, pwtries;
-	public static boolean sqlite, email, phpapi, guestfailsafe;
+	public static boolean sqlite, email, phpapi, guestfailsafe, strict_authlobby;
 	public static String version, authlobby, host, port, dbName, username, pass, register,
     reg_success, already_reg, login_success, already_in, logout_success, already_out, reset_noreg, reset_success,
     no_perm, pass_change_success, wrong_pass, welcome_resume, welcome_login, welcome_register, pre_login,
@@ -115,7 +115,8 @@ public class Main extends Plugin
 	    dbName = YamlGenerator.config.getString("DBName");
 	    username = YamlGenerator.config.getString("Username");
 	    pass = YamlGenerator.config.getString("Password");
-	    authlobby = YamlGenerator.config.getString("AuthLobby");
+		authlobby = YamlGenerator.config.getString("AuthLobby");
+		strict_authlobby = YamlGenerator.config.getBoolean("Strict AuthLobby");
 	    email = YamlGenerator.config.getBoolean("Ask Email");
 	    seshlength = YamlGenerator.config.getInt("Session Length");
 	    gseshlength = YamlGenerator.config.getInt("Guest Session Length");
