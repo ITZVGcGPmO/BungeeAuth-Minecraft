@@ -1,13 +1,18 @@
 package me.vik1395.BungeeAuth;
 
+import java.util.List;
 import java.util.Random;
 
+import com.mattmalec.pterodactyl4j.application.entities.User;
 import me.vik1395.BungeeAuth.Password.PasswordHandler;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+
+import static me.vik1395.BungeeAuth.Main.plugin;
+import static me.vik1395.BungeeAuth.Main.ptero;
 
 /*
 
@@ -71,6 +76,11 @@ public class ChangePassword extends Command
 						hash = ph.newHash(newPw, pType);
 						
 						t.updatePassword(pName, hash, pType);
+						if (Main.usePterodactyl) { // update ptero account credentials.
+							for (User ptero_acc: ptero.retrieveUsersByUsername(pName.toLowerCase(), false).execute()) {
+								ptero.getUserManager().editUser(ptero_acc).setPassword(newPw).build().execute();
+							}
+						}
 						p.sendMessage(new ComponentBuilder(Main.pass_change_success).color(ChatColor.GOLD).create());
 					}
 				}

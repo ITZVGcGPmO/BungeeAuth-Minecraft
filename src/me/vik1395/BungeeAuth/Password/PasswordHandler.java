@@ -1,5 +1,7 @@
 package me.vik1395.BungeeAuth.Password;
 
+import com.mattmalec.pterodactyl4j.application.entities.User;
+import me.vik1395.BungeeAuth.Main;
 import me.vik1395.BungeeAuth.Tables;
 
 import java.math.BigInteger;
@@ -7,7 +9,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.List;
 import java.util.UUID;
+
+import static me.vik1395.BungeeAuth.Main.plugin;
+import static me.vik1395.BungeeAuth.Main.ptero;
 /*
 
 Author: Vik1395
@@ -50,76 +56,87 @@ public class PasswordHandler
     private static SecureRandom rnd = new SecureRandom();
 
     public boolean checkPassword(String checkPass, String type, String pname) {
-        String realPass = t.getPassword(pname);
         boolean pwCheck = false;
+        String realPass = t.getPassword(pname);
         String checkPassHash = "";
         String salt = "";
-        
+
         if(type.equals("0"))
         {
-        	int saltPos = (checkPass.length() >= realPass.length() ? realPass.length() - 1 : checkPass.length());
+            int saltPos = (checkPass.length() >= realPass.length() ? realPass.length() - 1 : checkPass.length());
             salt = realPass.substring(saltPos, saltPos + 12);
             String hash = whirlpool(salt + checkPass);
             checkPassHash = hash.substring(0, saltPos) + salt + hash.substring(saltPos);
-            
+
             pwCheck = checkPassHash.equals(realPass);
         }
-        
+
         else if(type.equals("1"))
         {
-        	checkPassHash = whirlpool(checkPass);
-        	pwCheck = checkPassHash.equals(realPass);
+            checkPassHash = whirlpool(checkPass);
+            pwCheck = checkPassHash.equals(realPass);
         }
-        
+
         else if(type.equals("2"))
         {
-        	checkPassHash = hash(checkPass, "MD5");
-        	pwCheck = checkPassHash.equals(realPass);
+            checkPassHash = hash(checkPass, "MD5");
+            pwCheck = checkPassHash.equals(realPass);
         }
-        
+
         else if(type.equals("3"))
         {
-        	checkPassHash = hash(checkPass, "SHA-1");
-        	pwCheck = checkPassHash.equals(realPass);
+            checkPassHash = hash(checkPass, "SHA-1");
+            pwCheck = checkPassHash.equals(realPass);
         }
-        
+
         else if(type.equals("4"))
         {
-        	checkPassHash = hash(checkPass, "SHA-256");
-        	pwCheck = checkPassHash.equals(realPass);
+            checkPassHash = hash(checkPass, "SHA-256");
+            pwCheck = checkPassHash.equals(realPass);
         }
-        
+
         else if(type.equals("5"))
         {
-        	String[] line = realPass.split("\\$");
-            if (line.length > 3 && line[1].equals("SHA")) 
+            String[] line = realPass.split("\\$");
+            if (line.length > 3 && line[1].equals("SHA"))
             {
                 pwCheck = realPass.equals(getSaltedHash(checkPass, line[2]));
             }
         }
-        
+
         else if(type.equals("6"))
         {
-        	PBKDF2Hash ph = new PBKDF2Hash();
-        	try 
-			{
-				pwCheck = ph.validatePassword(checkPass, realPass);
-			} 
-			catch (InvalidKeySpecException | NoSuchAlgorithmException e)
-			{
-				System.out.println("Error in Validation");
-				e.printStackTrace();
-			}
-			
+            PBKDF2Hash ph = new PBKDF2Hash();
+            try
+            {
+                pwCheck = ph.validatePassword(checkPass, realPass);
+            }
+            catch (InvalidKeySpecException | NoSuchAlgorithmException e)
+            {
+                System.out.println("Error in Validation");
+                e.printStackTrace();
+            }
+
         }
-        
+
         else if(type.equals("7"))
         {
-        	int saltPos = (checkPass.length() >= realPass.length() ? realPass.length() - 1 : checkPass.length());
+            int saltPos = (checkPass.length() >= realPass.length() ? realPass.length() - 1 : checkPass.length());
             String xsalt = realPass.substring(saltPos, saltPos + 12);
             pwCheck = realPass.equals(getXAuth(checkPass, xsalt));
         }
-
+        if (Main.usePterodactyl && pwCheck) { // if pwcheck successful and ptero enabled, make sure they have an account.
+            if (ptero.retrieveUsersByUsername(pname.toLowerCase(), false).execute().size()==0) {
+                plugin.getLogger().info("Player "+pname+" did /login successfully without a ptero account; Creating one for them.");
+                ptero.getUserManager().createUser()
+                        .setUserName(pname.toLowerCase())
+                        .setEmail(t.getEmail(pname))
+                        .setFirstName(pname)
+                        .setLastName(".")
+                        .setPassword(checkPass)
+                        .build().execute();
+            }
+        }
         return pwCheck;
     }
 

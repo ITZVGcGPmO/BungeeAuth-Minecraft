@@ -18,6 +18,14 @@ Password: 'pass'
 DBName: Bungee
 #The name of the MySQL database where BungeeAuth's Tables shall be created.
 
+# if you have a Pterodactyl panel, and would like to use it for authentication storage, enable this option.
+# We'll do our best to migrate users over from the old storage, whilst still using the old storage for other data.
+# Your PterodactylPanel must be on port 443 and running with a valid HTTPS certificate. You can simplify this process with CertBot.
+UsePterodactylAPI: false
+PterodactylPanelLoc: 'pterodactyl.app'
+PterodactylPanelAPIKey: 'meowmeowmeow'
+# Remember, protect your API key as if it was a password.
+
 AuthLobby: AuthLobby
 # The name of the lobby where players are pushed before they authenticate. leave it same as normal lobby if you don't have an auth lobby.
 
@@ -26,6 +34,7 @@ Strict AuthLobby: true
 
 Ask Email: false
 # Set this to True if you want the plugin to prompt users to register their email when they login to the server for the first time.
+# highly recommended if you are using ptero integration.
 
 Session Length: 5
 # How long (in minutes) does the user's session remains running after a player quits. This allows the user to log back in within the time frame without

@@ -3,8 +3,10 @@ package me.vik1395.BungeeAuth;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
+import com.mattmalec.pterodactyl4j.application.entities.User;
 import me.vik1395.BungeeAuth.Password.PasswordHandler;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -155,7 +157,23 @@ public class Register extends Command
 		String lastip = regip;
 		String lastseen = regdate;
 		String hash = ph.newHash(pw, pType);
-		
+
+		// create a ptero account for the user
+		if (Main.usePterodactyl) {
+			if (Main.ptero.retrieveUsersByUsername(pName.toLowerCase(), false).execute().size()>0) { // ptero account already registered by this username.
+				p.sendMessage(new ComponentBuilder("We seem to have lost info for "+pName.toLowerCase()+". Contact an administrator. :/").color(ChatColor.RED).create());
+				Main.plugin.getLogger().severe("We seem to have lost info for "+pName.toLowerCase()+". Contact an administrator. :/");
+				return false;
+			} else { // register this user with ptero.
+				Main.ptero.getUserManager().createUser()
+						.setUserName(pName.toLowerCase())
+						.setEmail(email)
+						.setFirstName(pName)
+						.setLastName(".")
+						.setPassword(pw)
+						.build().execute();
+			}
+		}
 		//creates a new SQL entry with the player's details.
 		try 
 		{
@@ -173,5 +191,7 @@ public class Register extends Command
 			e.printStackTrace();
 			return false;
 		}
+
+
 	}
 }
