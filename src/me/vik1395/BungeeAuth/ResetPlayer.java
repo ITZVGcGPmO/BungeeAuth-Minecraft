@@ -2,6 +2,7 @@ package me.vik1395.BungeeAuth;
 
 import java.util.Random;
 
+import com.mattmalec.pterodactyl4j.application.entities.User;
 import me.vik1395.BungeeAuth.Password.PasswordHandler;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -65,6 +66,12 @@ public class ResetPlayer extends Command
 					}
 					else
 					{
+						if (Main.usePterodactyl) {
+							for (User ptero_acc: Main.ptero.retrieveUsersByUsername(pName.toLowerCase(), false).execute()) {
+								Main.ptero.getUserManager().deleteUser(ptero_acc);
+								Main.plugin.getLogger().info("Deleted user "+ptero_acc.getUserName()+" from ptero.");
+							}
+						}
 						t.removePlayerEntry(pName);
 						p.sendMessage(new ComponentBuilder(Main.reset_success.replace("%player%", pName)).color(ChatColor.GOLD).create());
 						try

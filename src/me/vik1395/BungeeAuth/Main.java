@@ -1,17 +1,20 @@
 package me.vik1395.BungeeAuth;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.mattmalec.pterodactyl4j.PteroBuilder;
+import com.mattmalec.pterodactyl4j.application.entities.PteroApplication;
+import com.mattmalec.pterodactyl4j.entities.PteroAPI;
 import me.vik1395.BungeeAuth.Utils.YamlGenerator;
 import me.vik1395.BungeeAuthAPI.PHP.APISockets;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /*
 
@@ -36,11 +39,12 @@ public class Main extends Plugin
 	public static HashMap<String, Runnable> guestserverchecker;
 	public static Plugin plugin;
 	public static int seshlength, phpport, gseshlength, entperip, errlim, pwtimeout, pwtries;
-	public static boolean sqlite, email, phpapi, guestfailsafe, strict_authlobby;
-	public static String version, authlobby, host, port, dbName, username, pass, register,
+	public static boolean sqlite, email, phpapi, guestfailsafe, strict_authlobby, usePterodactyl;
+	public static String version, authlobby, host, port, dbName, username, pass, ptpnlLoc, ptpnlKey, register,
     reg_success, already_reg, login_success, already_in, logout_success, already_out, reset_noreg, reset_success,
     no_perm, pass_change_success, wrong_pass, welcome_resume, welcome_login, welcome_register, pre_login,
     error_authlobby, error_no_server, phppass, reg_limit, illegal_name, nologin_kick, allowedun, spammed_password, force_register, force_login, force_logout;
+	public static PteroApplication ptero;
 	
 	public void onEnable()
 	{
@@ -53,7 +57,7 @@ public class Main extends Plugin
 		loadYaml();
 		
 		ct = new Tables();
-		
+
 		try 
 		{
 			ct.Create();
@@ -62,6 +66,23 @@ public class Main extends Plugin
 		{
 			getLogger().info("Unable to create MySQL table! Please make sure login details are correct and the SQL server accepts connections!");
 			e.printStackTrace();
+		}
+		if (usePterodactyl) {
+			if (!email) {
+				getLogger().info("It's highly suggested to ask for emails if you plan on using ptero integration.");
+			}
+			if (ptpnlLoc.equalsIgnoreCase("pterodactyl.app")) {
+				getLogger().info("You haven't configured PterodactylPanelLoc properly. :(");
+				usePterodactyl = false;
+			}
+			if (!ptpnlLoc.matches("^https?\\:\\/\\/")) { ptpnlLoc = "https://" + ptpnlLoc; } // you forgot that there. woops!
+			if (ptpnlKey.equalsIgnoreCase("meowmeowmeow")) {
+				getLogger().info("You haven't configured PterodactylPanelAPIKey properly. :(");
+				usePterodactyl = false;
+			}
+			getLogger().info("enabling Pterodactyl support..");
+			ptero = new PteroBuilder().setApplicationUrl(ptpnlLoc).setToken(ptpnlKey).build().asApplication();
+			getLogger().info("enabled Pterodactyl support.");
 		}
 
 		plonline = new ArrayList<String>();
@@ -88,7 +109,7 @@ public class Main extends Plugin
 		{
 			checkGuestServer();
 		}
-		
+
 		getLogger().info("BungeeAuth has successfully started!");
 		getLogger().info("Created by Vik1395");
 		
@@ -108,13 +129,15 @@ public class Main extends Plugin
 	
 	private void loadYaml()
 	{
-
 	    sqlite = YamlGenerator.config.getBoolean("Use SQLite");
 		host = YamlGenerator.config.getString("Host");
 	    port = "" + YamlGenerator.config.getInt("Port");
-	    dbName = YamlGenerator.config.getString("DBName");
-	    username = YamlGenerator.config.getString("Username");
-	    pass = YamlGenerator.config.getString("Password");
+		dbName = YamlGenerator.config.getString("DBName");
+		username = YamlGenerator.config.getString("Username");
+		pass = YamlGenerator.config.getString("Password");
+		usePterodactyl = YamlGenerator.config.getBoolean("UsePterodactylAPI");
+		ptpnlLoc = YamlGenerator.config.getString("PterodactylPanelLoc");
+		ptpnlKey = YamlGenerator.config.getString("PterodactylPanelAPIKey");
 		authlobby = YamlGenerator.config.getString("AuthLobby");
 		strict_authlobby = YamlGenerator.config.getBoolean("Strict AuthLobby");
 	    email = YamlGenerator.config.getBoolean("Ask Email");
